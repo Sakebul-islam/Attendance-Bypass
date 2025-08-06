@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-export async function POST(req) {
+import { NextRequest } from 'next/server';
+
+export async function POST(req: NextRequest) {
   try {
     const { employee_id, employee_name } = await req.json();
     
@@ -28,12 +30,20 @@ export async function POST(req) {
     console.error('Error calling the API', error);
     
     // Forward the error message from Django if available
-    const errorMessage = error.response?.data?.error || 'Error calling the API';
-    const status = error.response?.status || 500;
-    
+    let errorMessage = 'Error calling the API';
+    let status = 500;
+    let details = {};
+    if (error && typeof error === 'object' && 'response' in error && error.response) {
+      // @ts-expect-error: dynamic error shape
+      errorMessage = error.response.data?.error || errorMessage;
+      // @ts-expect-error: dynamic error shape
+      status = error.response.status || status;
+      // @ts-expect-error: dynamic error shape
+      details = error.response.data || {};
+    }
     return new Response(JSON.stringify({ 
       error: errorMessage,
-      details: error.response?.data || {} 
+      details: details
     }), {
       status: status,
       headers: { 'Content-Type': 'application/json' },

@@ -1,13 +1,36 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { AlertCircle, Shield, Code, Network, Server, Play, X, CheckCircle } from 'lucide-react';
 
 export default function AttendanceLivePreview() {
   const [selectedEmployee, setSelectedEmployee] = useState('2-Mahmuda');
   const [isLoading, setIsLoading] = useState(false);
-  const [currentAttempt, setCurrentAttempt] = useState(null);
-  const [results, setResults] = useState<any[]>([]);
+  interface AttemptState {
+    method: string;
+    phase: 'connecting' | 'sending_headers' | 'server_validation' | 'success' | 'failed';
+  }
+  const [currentAttempt, setCurrentAttempt] = useState<AttemptState | null>(null);
+  interface AttendanceResult {
+  id: number;
+  method: string;
+  timestamp: string;
+  success: boolean;
+  actualIP: string;
+  attemptedIP: string;
+  headers: Record<string, string>;
+  error: string | null;
+  detectionMethod: string;
+  serverResponse: {
+    status: number;
+    message?: string;
+    error?: string;
+    submitted_as_ip?: string;
+    details?: unknown;
+  };
+}
+
+const [results, setResults] = useState<AttendanceResult[]>([]);
   const [showCode, setShowCode] = useState(false);
 
   // Employee data extracted from attendance records (updated with latest data)
@@ -43,18 +66,17 @@ export default function AttendanceLivePreview() {
     setIsLoading(true);
     setCurrentAttempt({
       method: bypassMethod.name,
-      startTime: Date.now(),
       phase: 'connecting'
     });
 
     try {
       // Phase 1: Connecting
       await new Promise(resolve => setTimeout(resolve, 800));
-      setCurrentAttempt(prev => ({ ...prev, phase: 'sending_headers' }));
+      setCurrentAttempt(prev => prev ? { ...prev, phase: 'sending_headers' } : null);
 
       // Phase 2: Sending headers through our bypass API
       await new Promise(resolve => setTimeout(resolve, 1000));
-      setCurrentAttempt(prev => ({ ...prev, phase: 'server_validation' }));
+      setCurrentAttempt(prev => prev ? { ...prev, phase: 'server_validation' } : null);
 
       // Phase 3: Making real API call through our bypass
       const response = await fetch('/api/attendance', {
@@ -94,7 +116,7 @@ export default function AttendanceLivePreview() {
       };
 
       setResults(prev => [result, ...prev.slice(0, 4)]);
-      setCurrentAttempt(prev => ({ ...prev, phase: data.success ? 'success' : 'failed' }));
+      setCurrentAttempt(prev => prev ? { ...prev, phase: isSuccess ? 'success' : 'failed' } : null);
       
       // Show success/failure phase for a moment
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -102,24 +124,24 @@ export default function AttendanceLivePreview() {
     } catch (error) {
       console.error('Submission error:', error);
       
-      const result = {
+      const result: AttendanceResult = {
         id: Date.now(),
-        method: bypassMethods[selectedMethod].name,
+        method: bypassMethod.name,
         timestamp: new Date().toLocaleTimeString(),
         success: false,
         actualIP: '116.204.148.43',
         attemptedIP: '103.98.107.98',
-        headers: bypassMethods[selectedMethod].headers,
+        headers: bypassMethod.headers,
         error: "Network error or API unavailable",
         detectionMethod: 'Connection Failed',
         serverResponse: {
           status: 500,
-          error: error.message
+          error: error instanceof Error ? error.message : String(error)
         }
       };
 
       setResults(prev => [result, ...prev.slice(0, 4)]);
-      setCurrentAttempt(prev => ({ ...prev, phase: 'failed' }));
+      setCurrentAttempt(prev => prev ? { ...prev, phase: 'failed' } : null);
     }
 
     setCurrentAttempt(null);
@@ -144,7 +166,7 @@ export default function AttendanceLivePreview() {
   };
 
   const generateCodePreview = () => {
-    const method = bypassMethods[selectedMethod];
+    const method = bypassMethod;
     return `// API Route: /app/api/attendance/route.js
 export async function POST(req) {
   try {
@@ -359,10 +381,10 @@ export async function POST(req) {
                 <div className="text-center text-gray-400 py-8">
                   <Server className="h-12 w-12 mx-auto mb-2 opacity-50" />
                   <p>No attempts yet</p>
-                  <p className="text-xs">Click "Submit Attendance" to see results</p>
+                  <p className="text-xs">Click &quot;Submit Attendance&quot; to see results</p>
                 </div>
               ) : (
-                results.map((result: any) => (
+                results.map((result: AttendanceResult) => (
                   <div key={result.id} className={`${result.success ? 'bg-green-900/20 border border-green-500/30' : 'bg-red-900/20 border border-red-500/30'} rounded-lg p-4`}>
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex items-center">
@@ -418,35 +440,6 @@ export async function POST(req) {
           </div>
         )}
 
-        {/* Working Solutions */}
-        <div className="mt-6 bg-green-900/20 backdrop-blur rounded-xl p-6 border border-gray-600">
-          <h2 className="text-xl font-semibold mb-4 flex items-center">
-            <CheckCircle className="h-5 w-5 mr-2 text-green-400" />
-            Actual Working Solutions
-          </h2>
-          
-          <div className="grid md:grid-cols-2 gap-4 text-sm">
-            <div className="bg-green-900/20 p-4 rounded-lg">
-              <h3 className="font-medium text-green-300 mb-2">🔒 Corporate VPN</h3>
-              <p className="text-gray-300">Connect through company VPN to appear from office network range.</p>
-            </div>
-            
-            <div className="bg-green-900/20 p-4 rounded-lg">
-              <h3 className="font-medium text-green-300 mb-2">🏢 Remote Desktop</h3>
-              <p className="text-gray-300">Access office computer remotely and submit from there.</p>
-            </div>
-            
-            <div className="bg-green-900/20 p-4 rounded-lg">
-              <h3 className="font-medium text-green-300 mb-2">📋 IP Whitelisting</h3>
-              <p className="text-gray-300">Request IT to add your home IP to the allowed list.</p>
-            </div>
-            
-            <div className="bg-green-900/20 p-4 rounded-lg">
-              <h3 className="font-medium text-green-300 mb-2">🌐 Office Proxy</h3>
-              <p className="text-gray-300">Set up proxy server at office location for routing.</p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
