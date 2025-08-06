@@ -323,7 +323,6 @@ export async function POST(req) {
                 </div>
               </div>
             )}
-
             {/* System Info */}
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
