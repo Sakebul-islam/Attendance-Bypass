@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 export default function AttendanceLivePreview() {
-  const [selectedEmployee, setSelectedEmployee] = useState("2-Mahmuda");
+  const [selectedEmployee, setSelectedEmployee] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   interface AttemptState {
     method: string;
@@ -119,6 +119,9 @@ export default function AttendanceLivePreview() {
 
   // Get current employee details
   const getCurrentEmployee = () => {
+    if (!selectedEmployee) {
+      return { id: 0, name: 'No employee selected' };
+    }
     const [id, name] = selectedEmployee.split("-");
     return { id: parseInt(id), name };
   };
@@ -392,6 +395,9 @@ export default function AttendanceLivePreview() {
                   onChange={(e) => setSelectedEmployee(e.target.value)}
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white"
                 >
+                  <option value="" disabled className="text-gray-500">
+                    -- Select an employee --
+                  </option>
                   {employees.map((emp, index) => (
                     <option
                       key={`${emp.id}-${emp.name}-${index}`}
@@ -412,12 +418,14 @@ export default function AttendanceLivePreview() {
               <div className="pt-2">
                 <button
                   onClick={simulateAttendanceSubmission}
-                  disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 text-white py-3 px-4 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 disabled:scale-100"
+                  disabled={isLoading || !selectedEmployee}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 text-white py-3 px-4 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed"
                 >
                   {isLoading
                     ? "Running Bypass Attempt..."
-                    : "Submit Attendance"}
+                    : selectedEmployee
+                    ? "Submit Attendance"
+                    : "Select an employee"}
                 </button>
               </div>
             </div>
