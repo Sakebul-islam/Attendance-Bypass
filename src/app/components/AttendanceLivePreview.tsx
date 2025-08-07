@@ -6,7 +6,6 @@ import {
   Shield,
   Network,
   Server,
-  Play,
   X,
   CheckCircle,
 } from "lucide-react";
@@ -27,17 +26,17 @@ export default function AttendanceLivePreview() {
     null
   );
   const [userActualIP, setUserActualIP] = useState<string>("Fetching...");
-  
+
   // Fetch user's actual IP address on component mount
   useEffect(() => {
     const fetchIP = async () => {
       try {
-        const response = await fetch('https://api.ipify.org?format=json');
+        const response = await fetch("https://api.ipify.org?format=json");
         const data = await response.json();
         setUserActualIP(data.ip);
       } catch (error) {
-        console.error('Error fetching IP:', error);
-        setUserActualIP('Error fetching IP');
+        console.error("Error fetching IP:", error);
+        setUserActualIP("Error fetching IP");
       }
     };
 
@@ -101,6 +100,21 @@ export default function AttendanceLivePreview() {
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     return now.toISOString().slice(0, 10);
   };
+
+  // Format "HH:mm:ss.SSSSSS" to 12-hour AM/PM
+  function formatTimeToAMPM(time: string): string {
+    if (!time) return "";
+    // Handle possible fractional seconds
+    const [hms] = time.split(".");
+    const [hour, minute, second] = hms.split(":").map(Number);
+    if (isNaN(hour) || isNaN(minute) || isNaN(second)) return time;
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const hour12 = hour % 12 || 12;
+    return `${hour12.toString().padStart(2, "0")}:${minute
+      .toString()
+      .padStart(2, "0")}:${second.toString().padStart(2, "0")} ${ampm}`;
+  }
+
   const [selectedDate, setSelectedDate] = useState(getLocalToday());
 
   // Employee data extracted from attendance records (updated with latest data)
@@ -120,7 +134,7 @@ export default function AttendanceLivePreview() {
   // Get current employee details
   const getCurrentEmployee = () => {
     if (!selectedEmployee) {
-      return { id: 0, name: 'No employee selected' };
+      return { id: 0, name: "No employee selected" };
     }
     const [id, name] = selectedEmployee.split("-");
     return { id: parseInt(id), name };
@@ -136,8 +150,12 @@ export default function AttendanceLivePreview() {
     },
   };
 
-  const [viewMode, setViewMode] = useState<"in" | "out" | "latest">("latest");
+  const [viewMode, setViewMode] = useState<"in" | "out" | "latest" | "all">(
+    "all"
+  );
 
+  const [attendancePage, setAttendancePage] = useState(1);
+  const ATTENDANCE_PER_PAGE = 10;
   let filteredAttendance: AttendanceRecord[] = [];
   if (viewMode === "in" || viewMode === "out") {
     filteredAttendance = attendanceData.filter(
@@ -154,7 +172,13 @@ export default function AttendanceLivePreview() {
         }
       }
     });
-    filteredAttendance = Array.from(latestMap.values());
+    filteredAttendance = Array.from(latestMap.values()).sort((a, b) =>
+      b.time.localeCompare(a.time)
+    );
+  } else if (viewMode === "all") {
+    filteredAttendance = attendanceData
+      .filter((rec) => rec.date === selectedDate)
+      .sort((a, b) => b.time.localeCompare(a.time));
   }
 
   const simulateAttendanceSubmission = async () => {
@@ -268,15 +292,12 @@ export default function AttendanceLivePreview() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 text-white p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 text-white p-4 pt-12">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-500/20 rounded-full mb-4 border-2 border-blue-500/30">
-            <Play className="h-10 w-10 text-blue-400" />
-          </div>
           <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            Live Attendance System Preview
+            Attendance Bypass
           </h1>
           <p className="text-gray-300">
             Real-time demonstration of IP bypass attempts
@@ -297,39 +318,65 @@ export default function AttendanceLivePreview() {
               <input
                 type="date"
                 value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
+                onChange={(e) => {
+                  setSelectedDate(e.target.value);
+                  setAttendancePage(1);
+                }}
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white mb-2"
               />
-              <div className="flex gap-2 mt-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
                 <button
-                  className={`px-3 py-1 rounded ${
+                  className={`px-3 py-2 text-sm rounded transition cursor-pointer ${
+                    viewMode === "all"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-700 text-gray-300"
+                  }`}
+                  onClick={() => {
+                    setViewMode("all");
+                    setAttendancePage(1);
+                  }}
+                  type="button"
+                >
+                  All
+                </button>
+                <button
+                  className={`px-3 py-2 text-sm rounded transition cursor-pointer ${
                     viewMode === "latest"
                       ? "bg-blue-500 text-white"
                       : "bg-gray-700 text-gray-300"
                   }`}
-                  onClick={() => setViewMode("latest")}
+                  onClick={() => {
+                    setViewMode("latest");
+                    setAttendancePage(1);
+                  }}
                   type="button"
                 >
                   Latest
                 </button>
                 <button
-                  className={`px-3 py-1 rounded ${
+                  className={`px-3 py-2 text-sm rounded transition cursor-pointer ${
                     viewMode === "in"
                       ? "bg-blue-500 text-white"
                       : "bg-gray-700 text-gray-300"
                   }`}
-                  onClick={() => setViewMode("in")}
+                  onClick={() => {
+                    setViewMode("in");
+                    setAttendancePage(1);
+                  }}
                   type="button"
                 >
                   IN Only
                 </button>
                 <button
-                  className={`px-3 py-1 rounded ${
+                  className={`px-3 py-2 text-sm rounded transition cursor-pointer ${
                     viewMode === "out"
                       ? "bg-blue-500 text-white"
                       : "bg-gray-700 text-gray-300"
                   }`}
-                  onClick={() => setViewMode("out")}
+                  onClick={() => {
+                    setViewMode("out");
+                    setAttendancePage(1);
+                  }}
                   type="button"
                 >
                   OUT Only
@@ -361,20 +408,66 @@ export default function AttendanceLivePreview() {
                           colSpan={3}
                           className="py-4 text-center text-gray-400"
                         >
-                          No IN records for this date
+                          No records for this date
                         </td>
                       </tr>
                     ) : (
-                      filteredAttendance.map((rec) => (
-                        <tr key={rec.id} className="border-b border-gray-700">
-                          <td className="py-2 px-3">{rec.employee_name}</td>
-                          <td className="py-2 px-3">{rec.time}</td>
-                          <td className="py-2 px-3 capitalize">{rec.type}</td>
-                        </tr>
-                      ))
+                      filteredAttendance
+                        .slice(
+                          (attendancePage - 1) * ATTENDANCE_PER_PAGE,
+                          attendancePage * ATTENDANCE_PER_PAGE
+                        )
+                        .map((attendance) => (
+                          <tr key={attendance.id}>
+                            <td className="py-2 px-3">
+                              {attendance.employee_name}
+                            </td>
+                            <td className="py-2 px-3">
+                              {formatTimeToAMPM(attendance.time)}
+                            </td>
+                            <td className="py-2 px-3 capitalize">
+                              {attendance.type}
+                            </td>
+                          </tr>
+                        ))
                     )}
                   </tbody>
                 </table>
+              )}
+              {/* Pagination Controls */}
+              {filteredAttendance.length > ATTENDANCE_PER_PAGE && (
+                <div className="flex justify-center items-center gap-4 mt-4">
+                  <button
+                    onClick={() => setAttendancePage((p) => Math.max(1, p - 1))}
+                    disabled={attendancePage === 1}
+                    className="px-3 py-1 text-sm rounded bg-gray-700 text-gray-200 disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm text-gray-400">
+                    Page {attendancePage} of{" "}
+                    {Math.ceil(filteredAttendance.length / ATTENDANCE_PER_PAGE)}
+                  </span>
+                  <button
+                    onClick={() =>
+                      setAttendancePage((p) =>
+                        Math.min(
+                          Math.ceil(
+                            filteredAttendance.length / ATTENDANCE_PER_PAGE
+                          ),
+                          p + 1
+                        )
+                      )
+                    }
+                    disabled={
+                      attendancePage ===
+                      Math.ceil(filteredAttendance.length / ATTENDANCE_PER_PAGE)
+                    }
+                    className="px-3 py-1 text-sm rounded bg-gray-700 text-gray-200 disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -492,7 +585,9 @@ export default function AttendanceLivePreview() {
                         </div>
                         <div>
                           <div className="text-gray-400">
-                            {result.success ? "Submitted as IP:" : "Detected IP:"}
+                            {result.success
+                              ? "Submitted as IP:"
+                              : "Detected IP:"}
                           </div>
                           <div
                             className={`font-mono ${
@@ -508,7 +603,9 @@ export default function AttendanceLivePreview() {
                         <div className="text-gray-400">Status:</div>
                         <div
                           className={
-                            result.success ? "text-green-400" : "text-orange-400"
+                            result.success
+                              ? "text-green-400"
+                              : "text-orange-400"
                           }
                         >
                           {result.detectionMethod}
@@ -603,8 +700,6 @@ export default function AttendanceLivePreview() {
                 </div>
               </div>
             </div>
-
-
           </div>
         </div>
       </div>
