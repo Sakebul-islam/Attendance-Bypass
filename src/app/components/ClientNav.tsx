@@ -10,6 +10,7 @@ export default function ClientNav() {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  
   return (
     <div className="ml-auto flex items-center relative">
       {/* Desktop Navigation */}
