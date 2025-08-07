@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import Link from "next/link";
 
 export default function ClientNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -31,14 +32,14 @@ export default function ClientNav() {
         >
           <span className="relative z-10">Admin</span>
         </a>
-        <a
-          href="themeforest.net/user/wprealizer/portfolio"
+        <Link
+          href="https://themeforest.net/user/wprealizer/portfolio"
           target="_blank"
           rel="noopener noreferrer"
           className="relative px-4 py-1.5 text-white font-medium rounded-sm bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm border border-white/20 text-sm shadow cursor-pointer transition-colors duration-200 hover:bg-purple-500/40 focus:bg-purple-500/40"
         >
           <span className="relative z-10">Themeforest</span>
-        </a>
+        </Link>
       </nav>
 
       {/* Mobile Menu Button */}
@@ -72,15 +73,15 @@ export default function ClientNav() {
             >
               <span className="relative z-10">Admin</span>
             </a>
-            <a
-              href="themeforest.net/user/wprealizer/portfolio"
+            <Link
+              href="https://themeforest.net/user/wprealizer/portfolio"
               target="_blank"
               rel="noopener noreferrer"
               className="relative block mx-3 my-2 px-4 py-1.5 text-white font-medium rounded-sm bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm border border-white/20 text-sm shadow cursor-pointer transition-colors duration-200 hover:bg-purple-500/40 focus:bg-purple-500/40"
               onClick={() => setIsMenuOpen(false)}
             >
               <span className="relative z-10">Themeforest</span>
-            </a>
+            </Link>
           </div>
         </div>
       )}
