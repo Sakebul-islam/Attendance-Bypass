@@ -10,7 +10,7 @@ export default function ClientNav() {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  
+
   return (
     <div className="ml-auto flex items-center relative">
       {/* Desktop Navigation */}
@@ -32,7 +32,7 @@ export default function ClientNav() {
           <span className="relative z-10">Admin</span>
         </a>
         <a
-          href="https://themeforest.net"
+          href="themeforest.net/user/wprealizer/portfolio"
           target="_blank"
           rel="noopener noreferrer"
           className="relative px-4 py-1.5 text-white font-medium rounded-sm bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm border border-white/20 text-sm shadow cursor-pointer transition-colors duration-200 hover:bg-purple-500/40 focus:bg-purple-500/40"
@@ -73,7 +73,7 @@ export default function ClientNav() {
               <span className="relative z-10">Admin</span>
             </a>
             <a
-              href="https://themeforest.net"
+              href="themeforest.net/user/wprealizer/portfolio"
               target="_blank"
               rel="noopener noreferrer"
               className="relative block mx-3 my-2 px-4 py-1.5 text-white font-medium rounded-sm bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm border border-white/20 text-sm shadow cursor-pointer transition-colors duration-200 hover:bg-purple-500/40 focus:bg-purple-500/40"
